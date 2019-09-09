@@ -12,6 +12,11 @@ from utils import *
 
 from OthelloNN import OthelloNN as onnet
 
+import json
+
+with open('config.json') as json_data_file:
+    config = json.load(json_data_file)
+
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
@@ -19,7 +24,7 @@ args = dotdict({
     'batch_size': 94,
     'cuda': False,
     'num_channels': 512,
-    'checkpoint': "/checkpoints"
+    'checkpoint': config["checkpoints"]
 })
 
 

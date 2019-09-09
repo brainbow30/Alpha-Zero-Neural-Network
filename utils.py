@@ -1,7 +1,10 @@
+import json
 import os
 
 import numpy as np
 
+with open('config.json') as json_data_file:
+    config = json.load(json_data_file)
 
 class dotdict(dict):
     def __getattr__(self, name):
@@ -11,7 +14,7 @@ class dotdict(dict):
 class read():
     def file(filename):
         boardTuples = []
-        filepath = os.path.join("Othello/intBoards/", filename)
+        filepath = os.path.join(config["intBoards"], filename)
         text_file = open(filepath, "r")
         lines = text_file.readlines()
         for row in lines:
