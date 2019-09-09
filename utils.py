@@ -8,26 +8,31 @@ class dotdict(dict):
         return self[name]
 
 
-class readBoards():
-    def readfile(self, filename):
+class read():
+    def file(filename):
         boardTuples = []
-        filepath = os.path.join("C:/Users/brain/IdeaProjects/Othello/intBoards/", filename)
+        filepath = os.path.join("Othello/intBoards/", filename)
         text_file = open(filepath, "r")
         lines = text_file.readlines()
         for row in lines:
             state = str.split(row, "\n")
             state = state[0]
             board, policy, result = str.split(state, ":")
-            board = str.split(board, ",")
-            board = np.array(board)
-            tempboard = []
-            for i in range(0, 6):
-                row = []
-                for j in range(0, 6):
-                    row.append(board[(i * 6) + j])
-                tempboard.append(row)
-            npboard = np.array(tempboard)
+            policy = str.split(policy, ",")
+            policy = np.array(policy)
+            npboard = read.board(board)
             boardTuples.append((npboard, policy, result))
 
         text_file.close()
         return boardTuples
+
+    def board(board):
+        board = str.split(board, ",")
+        board = np.array(board)
+        tempboard = []
+        for i in range(0, 6):
+            row = []
+            for j in range(0, 6):
+                row.append(board[(i * 6) + j])
+            tempboard.append(row)
+        return np.array(tempboard)

@@ -14,4 +14,7 @@ class Board():
 
     def getActionSize(self):
         # return number of actions
-        return self.n * self.n + 1
+        return self.n * self.n
+
+    def getN(self):
+        return self.n;
