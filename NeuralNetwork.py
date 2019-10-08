@@ -2,6 +2,9 @@ import datetime
 import time
 
 from flask import Flask
+from keras import backend as K
+from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
 
 from Board import *
 
@@ -34,27 +37,37 @@ class NeuralNetwork():
         self.board_x, self.board_y = board.getBoardSize()
         self.action_size = board.getActionSize()
 
-    def train(self, examples):
+    def train(self, examples, filepath):
+        # todo remove pi, only train with board and result, then when predicting only return predicted result of board
         """
         examples: list of examples, each example is of form (board, policy value, outcome of game)
         """
-        self.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
+        try:
+            self.nnet.model = load_model(filepath)
+        except:
+            print("no checkpoint")
         input_boards, target_pis, target_vs = list(zip(*examples))
         input_boards = np.asarray(input_boards)
         target_pis = np.asarray(target_pis)
         target_vs = np.asarray(target_vs)
-        self.nnet.model.fit(x=input_boards, y=[target_pis, target_vs], batch_size=args.batch_size, epochs=args.epochs)
-        self.save_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
+        checkpoint = ModelCheckpoint(filepath, monitor='v_loss', verbose=1, save_best_only=True, mode='min')
+        callbacks_list = [checkpoint]
+        self.nnet.model.fit(x=input_boards, y=[target_pis, target_vs], batch_size=args.batch_size,
+                            callbacks=callbacks_list, epochs=args.epochs)
         self.nnet.clear()
 
-    def predict(self, board):
+    def predict(self, board, size):
         """
         board: np array with board
         """
-        self.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
+        try:
+            self.nnet.model = load_model("checkpoints/weights.best" + str(size) + ".hdf5")
+        except:
+            print("no checkpoint")
+
         start = time.time()
         # preparing input
-        board = read.board(board)
+        board = read.board(board, size)
         board = board[np.newaxis, :]
         # run
         pi, v = self.nnet.model.predict(board)
@@ -62,39 +75,36 @@ class NeuralNetwork():
         print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time() - start))
         return pi[0], v[0]
 
-    def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
-        filepath = os.path.join(folder, filename)
-        if not os.path.exists(folder):
-            print("Checkpoint Directory does not exist! Making directory {}".format(folder))
-            os.mkdir(folder)
-        else:
-            print("Checkpoint Directory exists! ")
-
-        self.nnet.model.save_weights(filepath)
-
-    def load_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
-        filepath = os.path.join(folder, filename)
-        if not os.path.exists(filepath):
-            raise ("No model in path {}".format(filepath))
-        self.nnet.model.load_weights(filepath)
-
 
 @app.route('/train/<int:boardSize>')
 def train(boardSize):
-    boardProperties = Board(boardSize)
-    nn = NeuralNetwork(boardProperties)
-    intBoards = read.file("training" + str(boardProperties.getN()) + ".txt")
-    args["batch_size"] = len(intBoards)
-    nn.train(intBoards)
-    return str(datetime.datetime.now()) + " Trained"
+    try:
+
+        boardProperties = Board(boardSize)
+        nn = NeuralNetwork(boardProperties)
+        intBoards = read.file("training" + str(boardProperties.getN()) + ".txt", boardSize)
+        args["batch_size"] = len(intBoards)
+        filepath = "checkpoints/weights.best" + str(boardProperties.getN()) + ".hdf5"
+        nn.train(intBoards, filepath)
+        K.clear_session()
+        return str(datetime.datetime.now()) + " Trained"
+    except Exception as e:
+        print(e)
+        return "error"
 
 
 @app.route('/predict/<int:boardSize>/<string:board>')
 def predict(boardSize, board):
-    boardProperties = Board(boardSize)
-    nn = NeuralNetwork(boardProperties)
-    pi, v = nn.predict(board)
-    return str(v[0])
+    try:
+        K.clear_session()
+        boardProperties = Board(boardSize)
+        nn = NeuralNetwork(boardProperties)
+        pi, v = nn.predict(board, boardSize)
+        K.clear_session()
+        return str(v[0])
+    except Exception as e:
+        print(e)
+        return "error"
 
 
 if __name__ == '__main__':

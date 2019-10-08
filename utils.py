@@ -12,30 +12,34 @@ class dotdict(dict):
 
 
 class read():
-    def file(filename):
+    def file(filename, size):
         boardTuples = []
         filepath = os.path.join(config["intBoards"], filename)
         text_file = open(filepath, "r")
         lines = text_file.readlines()
         for row in lines:
-            state = str.split(row, "\n")
-            state = state[0]
-            board, policy, result = str.split(state, ":")
-            policy = str.split(policy, ",")
-            policy = np.array(policy)
-            npboard = read.board(board)
-            boardTuples.append((npboard, policy, result))
+            try:
+                state = str.split(row, "\n")
+                state = state[0]
+                board, policy, result = str.split(state, ":")
+                policy = str.split(policy, ",")
+                policy = np.array(policy)
+                npboard = read.board(board, size)
+                boardTuples.append((npboard, policy, result))
+            except:
+                print("Error")
+
 
         text_file.close()
         return boardTuples
 
-    def board(board):
+    def board(board, size):
         board = str.split(board, ",")
         board = np.array(board)
         tempboard = []
-        for i in range(0, 6):
+        for i in range(0, size):
             row = []
-            for j in range(0, 6):
-                row.append(board[(i * 6) + j])
+            for j in range(0, size):
+                row.append(board[(i * size) + j])
             tempboard.append(row)
         return np.array(tempboard)

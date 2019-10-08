@@ -45,3 +45,6 @@ class OthelloNN():
 
     def clear(self):
         K.clear_session()
+
+    def compile(self, args):
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(args.lr))
