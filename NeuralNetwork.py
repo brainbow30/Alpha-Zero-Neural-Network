@@ -38,16 +38,15 @@ class NeuralNetwork():
         self.action_size = board.getActionSize()
 
     def train(self, examples, filepath):
-        """
-        examples: list of examples, each example is of form (board, policy value, outcome of game)
-        """
         try:
             self.nnet.model = load_model(filepath)
         except:
             print("no checkpoint")
+
         input_boards, target_vs = list(zip(*examples))
         input_boards = np.asarray(input_boards)
         target_vs = np.asarray(target_vs)
+
         checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
         callbacks_list = [checkpoint]
         self.nnet.model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size,
@@ -55,19 +54,14 @@ class NeuralNetwork():
         self.nnet.clear()
 
     def predict(self, board, size):
-        """
-        board: np array with board
-        """
         try:
             self.nnet.model = load_model("checkpoints/weights.best" + str(size) + ".hdf5")
         except:
             print("no checkpoint")
 
         start = time.time()
-        # preparing input
         board = read.board(board, size)
         board = board[np.newaxis, :]
-        # run
         v = self.nnet.model.predict(board)
         self.nnet.clear()
         print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time() - start))
@@ -77,7 +71,6 @@ class NeuralNetwork():
 @app.route('/train/<int:boardSize>')
 def train(boardSize):
     try:
-
         boardProperties = Board(boardSize)
         nn = NeuralNetwork(boardProperties)
         intBoards = read.file("training" + str(boardProperties.getN()) + ".txt", boardSize)

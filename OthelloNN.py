@@ -1,12 +1,11 @@
 import sys
 
-sys.path.append('..')
-
-from keras.models import *
-from keras.layers import *
-from keras.optimizers import *
 from keras import backend as K
+from keras.layers import *
+from keras.models import *
+from keras.optimizers import *
 
+sys.path.append('..')
 
 class OthelloNN():
     def __init__(self, board, args):
@@ -41,6 +40,3 @@ class OthelloNN():
 
     def clear(self):
         K.clear_session()
-
-    def compile(self, args):
-        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(args.lr))
