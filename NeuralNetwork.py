@@ -23,7 +23,7 @@ with open('config.json') as json_data_file:
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 10,
+    'epochs': 100,
     'batch_size': 94,
     'cuda': False,
     'num_channels': 512,
@@ -38,7 +38,6 @@ class NeuralNetwork():
         self.action_size = board.getActionSize()
 
     def train(self, examples, filepath):
-        # todo remove pi, only train with board and result, then when predicting only return predicted result of board
         """
         examples: list of examples, each example is of form (board, policy value, outcome of game)
         """
@@ -46,13 +45,12 @@ class NeuralNetwork():
             self.nnet.model = load_model(filepath)
         except:
             print("no checkpoint")
-        input_boards, target_pis, target_vs = list(zip(*examples))
+        input_boards, target_vs = list(zip(*examples))
         input_boards = np.asarray(input_boards)
-        target_pis = np.asarray(target_pis)
         target_vs = np.asarray(target_vs)
-        checkpoint = ModelCheckpoint(filepath, monitor='v_loss', verbose=1, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
         callbacks_list = [checkpoint]
-        self.nnet.model.fit(x=input_boards, y=[target_pis, target_vs], batch_size=args.batch_size,
+        self.nnet.model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size,
                             callbacks=callbacks_list, epochs=args.epochs)
         self.nnet.clear()
 
@@ -70,10 +68,10 @@ class NeuralNetwork():
         board = read.board(board, size)
         board = board[np.newaxis, :]
         # run
-        pi, v = self.nnet.model.predict(board)
+        v = self.nnet.model.predict(board)
         self.nnet.clear()
         print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time() - start))
-        return pi[0], v[0]
+        return v[0]
 
 
 @app.route('/train/<int:boardSize>')
@@ -99,7 +97,7 @@ def predict(boardSize, board):
         K.clear_session()
         boardProperties = Board(boardSize)
         nn = NeuralNetwork(boardProperties)
-        pi, v = nn.predict(board, boardSize)
+        v = nn.predict(board, boardSize)
         K.clear_session()
         return str(v[0])
     except Exception as e:

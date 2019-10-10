@@ -21,11 +21,9 @@ class read():
             try:
                 state = str.split(row, "\n")
                 state = state[0]
-                board, policy, result = str.split(state, ":")
-                policy = str.split(policy, ",")
-                policy = np.array(policy)
+                board, result = str.split(state, ":")
                 npboard = read.board(board, size)
-                boardTuples.append((npboard, policy, result))
+                boardTuples.append((npboard, result))
             except:
                 print("Error")
 
