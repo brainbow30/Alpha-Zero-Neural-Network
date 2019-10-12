@@ -1,21 +1,18 @@
 import datetime
-import time
+import json
+import sys
 
+import tensorflow as tf
 from flask import Flask
-from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 
-from Board import *
+from utils import *
 
 app = Flask(__name__)
 
 sys.path.append('../..')
-from utils import *
 
-from OthelloNN import OthelloNN as onnet
-
-import json
 
 with open('config.json') as json_data_file:
     config = json.load(json_data_file)
@@ -30,69 +27,40 @@ args = dotdict({
     'checkpoint': config["checkpoints"]
 })
 
-
-class NeuralNetwork():
-    def __init__(self, board):
-        self.nnet = onnet(board, args)
-        self.board_x, self.board_y = board.getBoardSize()
-        self.action_size = board.getActionSize()
-
-    def train(self, examples, filepath):
-        try:
-            self.nnet.model = load_model(filepath)
-        except:
-            print("no checkpoint")
-
-        input_boards, target_vs = list(zip(*examples))
-        input_boards = np.asarray(input_boards)
-        target_vs = np.asarray(target_vs)
-
-        checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
-        callbacks_list = [checkpoint]
-        self.nnet.model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size,
-                            callbacks=callbacks_list, epochs=args.epochs)
-        self.nnet.clear()
-
-    def predict(self, board, size):
-        try:
-            self.nnet.model = load_model("checkpoints/weights.best" + str(size) + ".hdf5")
-        except:
-            print("no checkpoint")
-
-        start = time.time()
-        board = read.board(board, size)
-        board = board[np.newaxis, :]
-        v = self.nnet.model.predict(board)
-        self.nnet.clear()
-        print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time() - start))
-        return v[0]
-
+global graph
+graph = tf.get_default_graph()
+model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
 
 @app.route('/train/<int:boardSize>')
 def train(boardSize):
     try:
-        boardProperties = Board(boardSize)
-        nn = NeuralNetwork(boardProperties)
-        intBoards = read.file("training" + str(boardProperties.getN()) + ".txt", boardSize)
+        intBoards = read.file("training" + str(boardSize) + ".txt", boardSize)
         args["batch_size"] = len(intBoards)
-        filepath = "checkpoints/weights.best" + str(boardProperties.getN()) + ".hdf5"
-        nn.train(intBoards, filepath)
-        K.clear_session()
+        filepath = "checkpoints/weights.best" + str(boardSize) + ".h5"
+        input_boards, target_vs = list(zip(*intBoards))
+        input_boards = np.asarray(input_boards)
+        target_vs = np.asarray(target_vs)
+        checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+        callbacks_list = [checkpoint]
+
+        with graph.as_default():
+            model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size, callbacks=callbacks_list,
+                      epochs=args.epochs)
+
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         print(e)
         return "error"
 
 
-@app.route('/predict/<int:boardSize>/<string:board>')
-def predict(boardSize, board):
+@app.route('/predict/<int:size>/<string:board>')
+def predict(size, board):
     try:
-        K.clear_session()
-        boardProperties = Board(boardSize)
-        nn = NeuralNetwork(boardProperties)
-        v = nn.predict(board, boardSize)
-        K.clear_session()
-        return str(v[0])
+        board = read.board(board, size)
+        board = board[np.newaxis, :]
+        with graph.as_default():
+            v = str(model.predict(board)[0][0])
+        return v
     except Exception as e:
         print(e)
         return "error"

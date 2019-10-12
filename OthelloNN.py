@@ -1,6 +1,5 @@
 import sys
 
-from keras import backend as K
 from keras.layers import *
 from keras.models import *
 from keras.optimizers import *
@@ -8,10 +7,10 @@ from keras.optimizers import *
 sys.path.append('..')
 
 class OthelloNN():
-    def __init__(self, board, args):
+    def __init__(self, boardSize, args):
         # game params
-        self.board_x, self.board_y = board.getBoardSize()
-        self.action_size = board.getActionSize()
+        self.board_x, self.board_y = (boardSize, boardSize)
+        self.action_size = boardSize * boardSize
         self.args = args
 
         # Neural Net
