@@ -1,9 +1,9 @@
 import datetime
-import json
 import sys
 
 import tensorflow as tf
 from flask import Flask
+from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 
@@ -29,10 +29,12 @@ args = dotdict({
 
 global graph
 graph = tf.get_default_graph()
+# todo make model an array of all the models of different sizes
 model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
 
 @app.route('/train/<int:boardSize>')
 def train(boardSize):
+    global model
     try:
         intBoards = read.file("training" + str(boardSize) + ".txt", boardSize)
         args["batch_size"] = len(intBoards)
@@ -51,7 +53,8 @@ def train(boardSize):
     except Exception as e:
         print(e)
         return "error"
-
+    K.clear_session()
+    model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
 
 @app.route('/predict/<int:size>/<string:board>')
 def predict(size, board):
