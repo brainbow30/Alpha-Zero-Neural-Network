@@ -3,6 +3,7 @@ import sys
 
 import tensorflow as tf
 from flask import Flask
+from flask import request
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
@@ -32,11 +33,12 @@ graph = tf.get_default_graph()
 # todo make model an array of all the models of different sizes
 model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
 
-@app.route('/train/<int:boardSize>')
+
+@app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
     global model
     try:
-        intBoards = read.file("training" + str(boardSize) + ".txt", boardSize)
+        intBoards = read.trainingData(request.json["data"], boardSize)
         args["batch_size"] = len(intBoards)
         filepath = "checkpoints/weights.best" + str(boardSize) + ".h5"
         input_boards, target_vs = list(zip(*intBoards))

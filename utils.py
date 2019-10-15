@@ -1,5 +1,4 @@
 import json
-import os
 
 import numpy as np
 
@@ -12,23 +11,19 @@ class dotdict(dict):
 
 
 class read():
-    def file(filename, size):
+    def trainingData(boards, size):
+        boards = boards[2:len(boards) - 2]
+        boards = boards.split("],[")
         boardTuples = []
-        filepath = os.path.join(config["intBoards"], filename)
-        text_file = open(filepath, "r")
-        lines = text_file.readlines()
-        for row in lines:
+        for row in boards:
+            row = row.split("],")
             try:
-                state = str.split(row, "\n")
-                state = state[0]
-                board, result = str.split(state, ":")
+                board = row[0][1:]
+                result = row[1]
                 npboard = read.board(board, size)
                 boardTuples.append((npboard, result))
             except:
                 print("Error")
-
-
-        text_file.close()
         return boardTuples
 
     def board(board, size):
