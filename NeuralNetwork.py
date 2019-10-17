@@ -51,12 +51,15 @@ def train(boardSize):
             model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size, callbacks=callbacks_list,
                       epochs=args.epochs)
 
+        K.clear_session()
+        model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
+        K.clear_session()
+        model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
         print(e)
         return "error"
-    K.clear_session()
-    model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
+
 
 @app.route('/predict/<int:size>/<string:board>')
 def predict(size, board):
