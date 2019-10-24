@@ -5,6 +5,7 @@ import time
 import tensorflow as tf
 from flask import Flask
 from flask import request
+from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 
@@ -37,26 +38,33 @@ model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5"
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
     global model
+    global graph
     try:
         intBoards = read.trainingData(request.json["data"], boardSize)
         args["batch_size"] = len(intBoards)
-        filepath = "checkpoints/weights.best" + str(boardSize) + ".h5"
-        input_boards, target_vs = list(zip(*intBoards))
+        filepath = "checkpoints/weights.best" + str(config["boardSize"]) + ".h5"
+        input_boards, target_pis, target_vs = list(zip(*intBoards))
+        target_pis = np.asarray(target_pis)
         input_boards = np.asarray(input_boards)
         target_vs = np.asarray(target_vs)
         checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
         callbacks_list = [checkpoint]
 
         with graph.as_default():
-            model.fit(x=input_boards, y=target_vs, batch_size=args.batch_size, callbacks=callbacks_list,
+            model.fit(x=input_boards, y=[target_pis, target_vs], batch_size=args.batch_size, callbacks=callbacks_list,
                       epochs=args.epochs)
-
+        K.clear_session()
+        tf.reset_default_graph()
+        graph = tf.get_default_graph()
         model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
-        time.sleep(5)
+        time.sleep(10)
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
+        K.clear_session()
+        tf.reset_default_graph()
+        graph = tf.get_default_graph()
         model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
-        time.sleep(5)
+        time.sleep(10)
         print(e)
         return "error"
 
@@ -67,8 +75,12 @@ def predict(size, board):
         board = read.board(board, size)
         board = board[np.newaxis, :]
         with graph.as_default():
-            v = str(model.predict(board)[0][0])
-        return v
+            pi, v = model.predict(board)
+        policyString = ""
+        for i in pi[0]:
+            policyString += str(i) + ","
+        policyString = policyString[0:len(policyString) - 1]
+        return policyString + ":" + str(v[0][0])
     except Exception as e:
         print(e)
         return "error"

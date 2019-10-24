@@ -4,6 +4,8 @@ from keras.layers import *
 from keras.models import *
 from keras.optimizers import *
 
+from utils import *
+
 sys.path.append('..')
 
 class OthelloNN():
@@ -33,9 +35,30 @@ class OthelloNN():
             BatchNormalization(axis=1)(Dense(1024, use_bias=False)(h_conv4_flat))))  # batch_size x 1024
         s_fc2 = Dropout(args.dropout)(
             Activation('relu')(BatchNormalization(axis=1)(Dense(512, use_bias=False)(s_fc1))))  # batch_size x 1024
+        self.pi = Dense(self.action_size, activation='softmax', name='pi')(s_fc2)  # batch_size x self.action_size
         self.v = Dense(1, activation='tanh', name='v')(s_fc2)  # batch_size x 1
-        self.model = Model(inputs=self.input_boards, outputs=self.v)
-        self.model.compile(loss='mean_squared_error', optimizer=Adam(args.lr))
+
+        self.model = Model(inputs=self.input_boards, outputs=[self.pi, self.v])
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(args.lr))
+
 
     def clear(self):
         K.clear_session()
+
+    def save(self):
+        self.model.save("checkpoints/weights.best" + str(self.board_x) + ".h5")
+        print("Saved model to disk")
+
+
+args = dotdict({
+    'lr': 0.001,
+    'dropout': 0.3,
+    'epochs': 100,
+    'batch_size': 94,
+    'cuda': False,
+    'num_channels': 512,
+
+})
+# create new model
+nn = OthelloNN(config["boardSize"], args)
+nn.save()
