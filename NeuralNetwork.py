@@ -31,9 +31,13 @@ args = dotdict({
 
 global graph
 graph = tf.get_default_graph()
-# todo make model an array of all the models of different sizes
-model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
+modelLocation = "checkpoints/smallNNweights.best"
+model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
 
+global testgraph
+testgraph = tf.get_default_graph()
+testModelLocation = "checkpoints/bigNNweights.best"
+testmodel = load_model(testModelLocation + str(config["boardSize"]) + ".h5")
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
@@ -42,7 +46,7 @@ def train(boardSize):
     try:
         intBoards = read.trainingData(request.json["data"], boardSize)
         args["batch_size"] = len(intBoards)
-        filepath = "checkpoints/weights.best" + str(config["boardSize"]) + ".h5"
+        filepath = modelLocation + str(config["boardSize"]) + ".h5"
         input_boards, target_pis, target_vs = list(zip(*intBoards))
         target_pis = np.asarray(target_pis)
         input_boards = np.asarray(input_boards)
@@ -56,14 +60,14 @@ def train(boardSize):
         K.clear_session()
         tf.reset_default_graph()
         graph = tf.get_default_graph()
-        model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
+        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         K.clear_session()
         tf.reset_default_graph()
         graph = tf.get_default_graph()
-        model = load_model("checkpoints/weights.best" + str(config["boardSize"]) + ".h5")
+        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         print(e)
         return "error"
@@ -76,6 +80,23 @@ def predict(size, board):
         board = board[np.newaxis, :]
         with graph.as_default():
             pi, v = model.predict(board)
+        policyString = ""
+        for i in pi[0]:
+            policyString += str(i) + ","
+        policyString = policyString[0:len(policyString) - 1]
+        return policyString + ":" + str(v[0][0])
+    except Exception as e:
+        print(e)
+        return "error"
+
+
+@app.route('/testpredict/<int:size>/<string:board>')
+def testpredict(size, board):
+    try:
+        board = read.board(board, size)
+        board = board[np.newaxis, :]
+        with testgraph.as_default():
+            pi, v = testmodel.predict(board)
         policyString = ""
         for i in pi[0]:
             policyString += str(i) + ","
