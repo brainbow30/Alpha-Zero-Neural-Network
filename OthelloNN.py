@@ -19,20 +19,18 @@ class OthelloNN():
         self.input_boards = Input(shape=(self.board_x, self.board_y))  # s: batch_size x board_x x board_y
         x_image = Reshape((self.board_x, self.board_y, 1))(self.input_boards)  # batch_size  x board_x x board_y x 1
         h_conv1 = Activation('relu')(BatchNormalization(axis=3)(
-            Conv2D(args.num_channels, 3, padding='same', use_bias=False)(
+            Conv2D(args.num_channels, 4, padding='same', use_bias=False)(
                 x_image)))  # batch_size  x board_x x board_y x num_channels
         h_conv2 = Activation('relu')(BatchNormalization(axis=3)(
-            Conv2D(args.num_channels, 3, padding='same', use_bias=False)(
+            Conv2D(args.num_channels, 4, padding='same', use_bias=False)(
                 h_conv1)))  # batch_size  x board_x x board_y x num_channels
         h_conv3 = Activation('relu')(BatchNormalization(axis=3)(
-            Conv2D(args.num_channels, 3, padding='valid', use_bias=False)(
+            Conv2D(args.num_channels, 4, padding='valid', use_bias=False)(
                 h_conv2)))  # batch_size  x (board_x-2) x (board_y-2) x num_channels
-        h_conv4 = Activation('relu')(BatchNormalization(axis=3)(
-            Conv2D(args.num_channels, 3, padding='valid', use_bias=False)(
-                h_conv3)))  # batch_size  x (board_x-4) x (board_y-4) x num_channels
-        h_conv4_flat = Flatten()(h_conv4)
+        # batch_size  x (board_x-4) x (board_y-4) x num_channels
+        h_conv3_flat = Flatten()(h_conv3)
         s_fc1 = Dropout(args.dropout)(Activation('relu')(
-            BatchNormalization(axis=1)(Dense(1024, use_bias=False)(h_conv4_flat))))  # batch_size x 1024
+            BatchNormalization(axis=1)(Dense(1024, use_bias=False)(h_conv3_flat))))  # batch_size x 1024
         s_fc2 = Dropout(args.dropout)(
             Activation('relu')(BatchNormalization(axis=1)(Dense(512, use_bias=False)(s_fc1))))  # batch_size x 1024
         self.pi = Dense(self.action_size, activation='softmax', name='pi')(s_fc2)  # batch_size x self.action_size
@@ -46,7 +44,8 @@ class OthelloNN():
         K.clear_session()
 
     def save(self):
-        self.model.save("checkpoints/weights.best" + str(self.board_x) + ".h5")
+        input("Type enter to save")
+        self.model.save("checkpoints/CNN4weights.best" + str(self.board_x) + ".h5")
         print("Saved model to disk")
 
 
