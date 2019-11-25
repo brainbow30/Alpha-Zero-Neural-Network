@@ -31,12 +31,12 @@ args = dotdict({
 
 global graph
 graph = tf.get_default_graph()
-modelLocation = "checkpoints/smallNNweights.best"
+modelLocation = config["model"]
 model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
 
 global testgraph
 testgraph = tf.get_default_graph()
-testModelLocation = "checkpoints/bigNNweights.best"
+testModelLocation = config["modelTest"]
 testmodel = load_model(testModelLocation + str(config["boardSize"]) + ".h5")
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
