@@ -31,13 +31,13 @@ args = dotdict({
 
 global graph
 graph = tf.get_default_graph()
-modelLocation = config["model"]
-model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+modelLocation = config["modelFolder"] + config["game"] + "/" + config["modelFile"]
+model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
 
 global testgraph
 testgraph = tf.get_default_graph()
-testModelLocation = config["modelTest"]
-testmodel = load_model(testModelLocation + str(config["boardSize"]) + ".h5")
+testModelLocation = modelLocation = config["modelFolder"] + config["game"] + "/" + config["testModelFile"]
+testModel = load_model(testModelLocation + "." + str(config["boardSize"]) + ".h5")
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
@@ -46,7 +46,7 @@ def train(boardSize):
     try:
         intBoards = read.trainingData(request.json["data"], boardSize)
         args["batch_size"] = len(intBoards)
-        filepath = modelLocation + str(config["boardSize"]) + ".h5"
+        filepath = modelLocation + "." + str(config["boardSize"]) + ".h5"
         input_boards, target_pis, target_vs = list(zip(*intBoards))
         target_pis = np.asarray(target_pis)
         input_boards = np.asarray(input_boards)
@@ -60,14 +60,14 @@ def train(boardSize):
         K.clear_session()
         tf.reset_default_graph()
         graph = tf.get_default_graph()
-        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+        model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         K.clear_session()
         tf.reset_default_graph()
         graph = tf.get_default_graph()
-        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+        model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         print(e)
         return "error"
@@ -96,7 +96,7 @@ def testpredict(size, board):
         board = read.board(board, size)
         board = board[np.newaxis, :]
         with testgraph.as_default():
-            pi, v = testmodel.predict(board)
+            pi, v = testModel.predict(board)
         policyString = ""
         for i in pi[0]:
             policyString += str(i) + ","
