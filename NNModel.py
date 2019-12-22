@@ -44,8 +44,8 @@ class OthelloNN():
         K.clear_session()
 
     def save(self):
-        input("Type enter to save")
-        self.model.save("checkpoints/CNN4weights.best" + str(self.board_x) + ".h5")
+        filename = input("Enter File Name:")
+        self.model.save(config["modelFolder"] + config["game"] + "/" + str(filename) + "." + str(self.board_x) + ".h5")
         print("Saved model to disk")
 
 
