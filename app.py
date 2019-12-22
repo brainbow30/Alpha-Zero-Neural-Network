@@ -22,7 +22,7 @@ with open('config.json') as json_data_file:
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 100,
+    'epochs': config["epochs"],
     'batch_size': 94,
     'cuda': False,
     'num_channels': 512,
