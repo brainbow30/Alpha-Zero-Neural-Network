@@ -1,8 +1,13 @@
 import datetime
+import json
 import sys
 import time
 
 import tensorflow as tf
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 from flask import Flask
 from flask import request
 from keras import backend as K
@@ -15,8 +20,7 @@ app = Flask(__name__)
 
 sys.path.append('../..')
 
-
-with open('config.json') as json_data_file:
+with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
     config = json.load(json_data_file)
 
 args = dotdict({
@@ -30,12 +34,12 @@ args = dotdict({
 })
 
 global graph
-graph = tf.get_default_graph()
+graph = tf.compat.v1.get_default_graph()
 modelLocation = config["modelFolder"] + config["game"] + "/" + config["modelFile"]
 model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
 
 global testgraph
-testgraph = tf.get_default_graph()
+testgraph = tf.compat.v1.get_default_graph()
 testModelLocation = modelLocation = config["modelFolder"] + config["game"] + "/" + config["testModelFile"]
 testModel = load_model(testModelLocation + "." + str(config["boardSize"]) + ".h5")
 
@@ -59,14 +63,14 @@ def train(boardSize):
                       epochs=args.epochs)
         K.clear_session()
         tf.reset_default_graph()
-        graph = tf.get_default_graph()
+        graph = tf.compat.v1.get_default_graph()
         model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         K.clear_session()
         tf.reset_default_graph()
-        graph = tf.get_default_graph()
+        graph = tf.compat.v1.get_default_graph()
         model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         print(e)

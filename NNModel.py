@@ -1,12 +1,21 @@
 import sys
 
+import tensorflow as tf
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 from keras.layers import *
 from keras.models import *
 from keras.optimizers import *
-
+import json
 from utils import *
 
+with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
+    config = json.load(json_data_file)
+
 sys.path.append('..')
+
 
 class OthelloNN():
     def __init__(self, boardSize, args):

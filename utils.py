@@ -1,9 +1,6 @@
-import json
 
 import numpy as np
 
-with open('config.json') as json_data_file:
-    config = json.load(json_data_file)
 
 class dotdict(dict):
     def __getattr__(self, name):
