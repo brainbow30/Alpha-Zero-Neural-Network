@@ -17,7 +17,7 @@ with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.
 sys.path.append('..')
 
 
-class OthelloNN():
+class OthelloCNN():
     def __init__(self, boardSize, args):
         # game params
         self.board_x, self.board_y = (boardSize, boardSize)
@@ -68,5 +68,5 @@ args = dotdict({
 
 })
 # create new model
-nn = OthelloNN(config["boardSize"], args)
+nn = OthelloCNN(config["boardSize"], args)
 nn.save()
