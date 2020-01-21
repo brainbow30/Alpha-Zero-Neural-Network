@@ -27,20 +27,20 @@ def identity_block(X, f, filters, stage, block):
     X = Conv2D(filters=F1, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=conv_name_base + "2a",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2a")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X = Conv2D(filters=F2, kernel_size=(f, f), strides=(1, 1), padding='same', name=conv_name_base + "2b",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2b")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X = Conv2D(filters=F3, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=conv_name_base + "2c",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2c")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X = Add()([X, X_shortcut])
-    X = Activation("relu")(X)
+    X = LeakyReLU(alpha=0.01)(X)
     return X
 
 
@@ -53,24 +53,24 @@ def convolutional_block(X, f, filters, stage, block, s=2):
     X = Conv2D(filters=F1, kernel_size=(1, 1), strides=(s, s), padding='valid', name=conv_name_base + "2a",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2a")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X = Conv2D(filters=F2, kernel_size=(f, f), strides=(1, 1), padding='same', name=conv_name_base + "2b",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2b")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X = Conv2D(filters=F3, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=conv_name_base + "2c",
                kernel_initializer=glorot_uniform(seed=0))(X)
     X = BatchNormalization(axis=3, name=bn_name_base + "2c")(X)
-    X = Activation('relu')(X)
+    X = LeakyReLU(alpha=0.01)(X)
 
     X_shortcut = Conv2D(filters=F3, kernel_size=(1, 1), strides=(s, s), padding='valid', name=conv_name_base + "1",
                         kernel_initializer=glorot_uniform(seed=0))(X_shortcut)
     X_shortcut = BatchNormalization(axis=3, name=bn_name_base + "1")(X_shortcut)
 
     X = Add()([X, X_shortcut])
-    X = Activation("relu")(X)
+    X = LeakyReLU(alpha=0.01)(X)
     return X
 
 
@@ -93,6 +93,7 @@ def ResNet(boardSize, args):
     X = convolutional_block(X, f=3, filters=[64, 64, 256], stage=2, block='a', s=1)
     X = identity_block(X, 3, [64, 64, 256], stage=2, block='b')
     X = identity_block(X, 3, [64, 64, 256], stage=2, block='c')
+    X = identity_block(X, 3, [64, 64, 256], stage=2, block='d')
 
     # Stage 3
     X = convolutional_block(X, f=3, filters=[128, 128, 512], stage=3, block='a', s=2)
@@ -104,18 +105,21 @@ def ResNet(boardSize, args):
     X = convolutional_block(X, f=3, filters=[256, 256, 1024], stage=4, block='a', s=2)
     X = identity_block(X, 3, [256, 256, 1024], stage=4, block='b')
     X = identity_block(X, 3, [256, 256, 1024], stage=4, block='c')
+    X = identity_block(X, 3, [256, 256, 1024], stage=4, block='d')
+    X = identity_block(X, 3, [256, 256, 1024], stage=4, block='e')
+    X = identity_block(X, 3, [256, 256, 1024], stage=4, block='f')
 
     # AVGPOOL
     X = AveragePooling2D(pool_size=(2, 2), padding='same')(X)
 
     # Output layer
     X = Flatten()(X)
-    pi = Dense(action_size, activation='softmax', name='pi', kernel_initializer=glorot_uniform(seed=0))(
+    pi = Dense(action_size, activation='linear', name='pi', kernel_initializer=glorot_uniform(seed=0))(
         X)  # batch_size x self.action_size
     v = Dense(1, activation='tanh', name='v', kernel_initializer=glorot_uniform(seed=0))(X)  # batch_size x 1
     # Create model
     model = Model(inputs=input_boards, outputs=[pi, v], name="ResNet")
-    model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(args.lr))
+    model.compile(loss=['mean_squared_error', 'mean_squared_error'], optimizer=Adam(args.lr))
 
     return model
 
