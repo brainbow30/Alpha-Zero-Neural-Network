@@ -73,22 +73,21 @@ def train(boardSize):
                 l_pi = loss_pi(target_pis, out_pi)
                 l_v = loss_v(target_vs, out_v)
                 total_loss = l_pi + l_v
-                if (total_loss.data.cpu().detach().numpy() < smallest_loss):
+                loss = abs(l_pi.data.cpu().detach().numpy()) + abs(l_v.data.cpu().detach().numpy())
+                if ((loss) < smallest_loss):
                     save_checkpoint(model, config["modelFolder"] + config["game"],
                                     config["modelFile"] + "." + str(config["boardSize"]))
 
                     print()
                     print("save model")
-                    print(
-                        "loss improves from " + str(smallest_loss) + "->" + str(total_loss.data.cpu().detach().numpy()))
-                    smallest_loss = total_loss.data.cpu().detach().numpy()
-
+                    print("loss improves from " + str(smallest_loss) + " -> " + str(loss))
+                    smallest_loss = loss
+                else:
+                    print()
+                    print("did not improve")
                 # record loss
                 pi_losses.update(l_pi.item(), boards.size(0))
                 v_losses.update(l_v.item(), boards.size(0))
-                print("total loss: ", v_losses.val + pi_losses.val)
-                print("pi loss: ", pi_losses.val)
-                print("v loss: ", v_losses.val)
 
                 # compute gradient and do SGD step
                 optimizer.zero_grad()
@@ -100,9 +99,17 @@ def train(boardSize):
                 end = time.time()
                 batch_idx += 1
 
+        model = load_checkpoint(model, config["modelFolder"] + config["game"],
+                                config["modelFile"] + "." + str(config["boardSize"]))
+        if (args.cuda):
+            model.cuda()
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         print(e)
+        model = load_checkpoint(model, config["modelFolder"] + config["game"],
+                                config["modelFile"] + "." + str(config["boardSize"]))
+        if (args.cuda):
+            model.cuda()
         return "error"
 
 
@@ -207,8 +214,8 @@ def load_checkpoint(model, folder='checkpoint', filename='checkpoint.pth.tar'):
     return model
 
 
-model = NNet(config["boardSize"], args)
-testmodel = NNet(config["boardSize"], args)
+model = NNet()
+testmodel = NNet()
 try:
     model = load_checkpoint(model, config["modelFolder"] + config["game"],
                             config["modelFile"] + "." + str(config["boardSize"]))
@@ -218,6 +225,7 @@ except Exception as e:
     print(e)
 if (args.cuda):
     model.cuda()
+    testmodel.cuda()
 
 if __name__ == '__main__':
     app.run()
