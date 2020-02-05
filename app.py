@@ -1,10 +1,8 @@
 import datetime
 import os
 import sys
-import time
 
 sys.path.append('../../')
-import math
 import torch
 import torch.optim as optim
 import tensorflow as tf
@@ -27,90 +25,81 @@ args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
     'epochs': config["epochs"],
-    'batch_size': 94,
+    'batch_size': 50,
     'cuda': True,
     'num_channels': 512,
-    'checkpoint': config["checkpoints"]
+    'checkpoint': config["checkpoints"],
+    'gamesPerTraining': 20
 })
+
+previous_games = 0
+previous_examples = []
 
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
     global model
-    try:
-        examples = read.trainingData(request.json["data"], boardSize)
-        args["batch_size"] = len(examples)
+    global previous_examples, previous_games
+    examples = read.trainingData(request.json["data"], boardSize)
+    previous_examples += examples
+    if (previous_games >= args.gamesPerTraining):
+        previous_games = 0
+        try:
+            optimizer = optim.Adam(model.parameters())
+            for epoch in range(args.epochs):
+                print()
+                print('EPOCH ::: ' + str(epoch + 1))
+                model.train()
+                pi_losses = AverageMeter()
+                v_losses = AverageMeter()
+                batch_idx = 0
+                while batch_idx < int(len(previous_examples) / args.batch_size):
+                    sample_ids = np.random.randint(len(previous_examples), size=args.batch_size)
+                    boards, pis, vs = list(zip(*[previous_examples[i] for i in sample_ids]))
+                    target_boards = torch.FloatTensor(np.array(boards).astype(np.float64))
+                    target_pis = torch.FloatTensor(np.array(pis))
+                    target_vs = torch.FloatTensor(np.array(vs).astype(np.float64))
 
-        optimizer = optim.Adam(model.parameters())
-        smallest_loss = math.inf
-        for epoch in range(args.epochs):
-            print('EPOCH ::: ' + str(epoch + 1))
-            model.train()
-            data_time = AverageMeter()
-            batch_time = AverageMeter()
-            pi_losses = AverageMeter()
-            v_losses = AverageMeter()
-            end = time.time()
+                    # predict
+                    if args.cuda:
+                        target_boards, target_pis, target_vs = target_boards.contiguous().cuda(), target_pis.contiguous().cuda(), target_vs.contiguous().cuda()
 
-            batch_idx = 0
+                    # measure data loading time
 
-            while batch_idx < int(len(examples) / args.batch_size):
-                sample_ids = np.random.randint(len(examples), size=args.batch_size)
-                boards, pis, vs = list(zip(*[examples[i] for i in sample_ids]))
-                boards = torch.FloatTensor(np.array(boards).astype(np.float64))
-                target_pis = torch.FloatTensor(np.array(pis))
-                target_vs = torch.FloatTensor(np.array(vs).astype(np.float64))
+                    # compute output
+                    out_pi, out_v = model(target_boards)
+                    l_pi = loss_pi(target_pis, out_pi)
+                    l_v = loss_v(target_vs, out_v)
+                    total_loss = l_pi + l_v
 
-                # predict
-                if args.cuda:
-                    boards, target_pis, target_vs = boards.contiguous().cuda(), target_pis.contiguous().cuda(), target_vs.contiguous().cuda()
+                    # record loss
+                    pi_losses.update(l_pi.item(), target_boards.size(0))
+                    v_losses.update(l_v.item(), target_boards.size(0))
 
-                # measure data loading time
-                data_time.update(time.time() - end)
+                    # compute gradient and do SGD step
+                    optimizer.zero_grad()
+                    total_loss.backward()
+                    optimizer.step()
+                    batch_idx += 1
+                print("pi: ", pi_losses.val)
+                print("v: ", v_losses.val)
 
-                # compute output
-                out_pi, out_v = model(boards)
-                l_pi = loss_pi(target_pis, out_pi)
-                l_v = loss_v(target_vs, out_v)
-                total_loss = l_pi + l_v
-                loss = abs(l_pi.data.cpu().detach().numpy()) + abs(l_v.data.cpu().detach().numpy())
-                if ((loss) < smallest_loss):
-                    save_checkpoint(model, config["modelFolder"] + config["game"],
+            save_checkpoint(model, config["modelFolder"] + config["game"],
+                            config["modelFile"] + "." + str(config["boardSize"]))
+            previous_examples = []
+            return str(datetime.datetime.now()) + " Trained"
+        except Exception as e:
+            print(e)
+            model = load_checkpoint(model, config["modelFolder"] + config["game"],
                                     config["modelFile"] + "." + str(config["boardSize"]))
-
-                    print()
-                    print("save model")
-                    print("loss improves from " + str(smallest_loss) + " -> " + str(loss))
-                    smallest_loss = loss
-                else:
-                    print()
-                    print("did not improve")
-                # record loss
-                pi_losses.update(l_pi.item(), boards.size(0))
-                v_losses.update(l_v.item(), boards.size(0))
-
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
-                total_loss.backward()
-                optimizer.step()
-
-                # measure elapsed time
-                batch_time.update(time.time() - end)
-                end = time.time()
-                batch_idx += 1
-
-        model = load_checkpoint(model, config["modelFolder"] + config["game"],
-                                config["modelFile"] + "." + str(config["boardSize"]))
-        if (args.cuda):
-            model.cuda()
-        return str(datetime.datetime.now()) + " Trained"
-    except Exception as e:
-        print(e)
-        model = load_checkpoint(model, config["modelFolder"] + config["game"],
-                                config["modelFile"] + "." + str(config["boardSize"]))
-        if (args.cuda):
-            model.cuda()
-        return "error"
+            if (args.cuda):
+                model.cuda()
+            return "error"
+    else:
+        previous_games += 1
+        print("examples added")
+        print("previous games: ", previous_games)
+        return "examples added"
 
 
 @app.route('/predict/<int:size>/<string:board>')
@@ -121,19 +110,17 @@ def predict(size, board):
         board = torch.FloatTensor(board.astype(np.float64))
         if args.cuda: board = board.contiguous().cuda()
         board = board.view(1, size, size)
-
         model.eval()
-
         with torch.no_grad():
             pi, v = model(board)
-
-        pi = torch.exp(pi).data.cpu().numpy()
+        pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
 
         policyString = ""
         for i in pi[0]:
             policyString += str(i) + ","
         policyString = policyString[0:len(policyString) - 1]
+        # print(policyString)
         return policyString + ":" + str(v[0][0])
     except Exception as e:
         print(e)
@@ -154,7 +141,7 @@ def testpredict(size, board):
         with torch.no_grad():
             pi, v = testmodel(board)
 
-        pi = torch.exp(pi).data.cpu().numpy()
+        pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
 
         policyString = ""
