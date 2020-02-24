@@ -28,8 +28,7 @@ args = dotdict({
     'batch_size': 50,
     'cuda': True,
     'num_channels': 512,
-    'checkpoint': config["checkpoints"],
-    'gamesPerTraining': 20
+    'checkpoint': config["checkpoints"]
 })
 
 previous_games = 0
@@ -42,7 +41,7 @@ def train(boardSize):
     global previous_examples, previous_games
     examples = read.trainingData(request.json["data"], boardSize)
     previous_examples += examples
-    if (previous_games >= args.gamesPerTraining):
+    if (previous_games >= config["gamesBeforeTraining"]):
         previous_games = 0
         try:
             optimizer = optim.Adam(model.parameters())
@@ -115,9 +114,10 @@ def predict(size, board):
             pi, v = model(board)
         pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
-
+        d = np.random.dirichlet(np.ones(len(pi[0])))
+        pi = 0.75 * pi + 0.25 * d
         policyString = ""
-        for i in pi[0]:
+        for i in pi:
             policyString += str(i) + ","
         policyString = policyString[0:len(policyString) - 1]
         # print(policyString)
@@ -143,9 +143,10 @@ def testpredict(size, board):
 
         pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
-
+        d = np.random.dirichlet(np.ones(len(pi[0])))
+        pi = 0.75 * pi + 0.25 * d
         policyString = ""
-        for i in pi[0]:
+        for i in pi:
             policyString += str(i) + ","
         policyString = policyString[0:len(policyString) - 1]
         return policyString + ":" + str(v[0][0])
@@ -204,11 +205,16 @@ def load_checkpoint(model, folder='checkpoint', filename='checkpoint.pth.tar'):
 model = NNet()
 testmodel = NNet()
 try:
+    print("loading ", config["modelFile"])
     model = load_checkpoint(model, config["modelFolder"] + config["game"],
                             config["modelFile"] + "." + str(config["boardSize"]))
+    print("loaded")
+    print("loading ", config["testModelFile"])
     testmodel = load_checkpoint(testmodel, config["modelFolder"] + config["game"],
                                 config["testModelFile"] + "." + str(config["boardSize"]))
+    print("loaded ")
 except Exception as e:
+    print("loading failed")
     print(e)
 if (args.cuda):
     model.cuda()
