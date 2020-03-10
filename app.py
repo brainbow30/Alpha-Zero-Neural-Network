@@ -115,12 +115,11 @@ def predict(size, board):
         pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
         d = np.random.dirichlet(np.ones(len(pi[0])))
-        pi = 0.75 * pi + 0.25 * d
+        pi[0] = 0.75 * pi + 0.25 * d
         policyString = ""
-        for i in pi:
+        for i in pi[0]:
             policyString += str(i) + ","
         policyString = policyString[0:len(policyString) - 1]
-        # print(policyString)
         return policyString + ":" + str(v[0][0])
     except Exception as e:
         print(e)
@@ -144,9 +143,9 @@ def testpredict(size, board):
         pi = pi.data.cpu().numpy()
         v = v.data.cpu().numpy()
         d = np.random.dirichlet(np.ones(len(pi[0])))
-        pi = 0.75 * pi + 0.25 * d
+        pi[0] = 0.75 * pi + 0.25 * d
         policyString = ""
-        for i in pi:
+        for i in pi[0]:
             policyString += str(i) + ","
         policyString = policyString[0:len(policyString) - 1]
         return policyString + ":" + str(v[0][0])
