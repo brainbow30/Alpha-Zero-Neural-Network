@@ -14,6 +14,8 @@ session = tf.Session(config=config)
 from flask import Flask
 from flask import request
 import json
+from matplotlib import pyplot as plt
+import random
 from utils import *
 
 app = Flask(__name__)
@@ -41,6 +43,7 @@ def train(boardSize):
     global previous_examples, previous_games
     examples = read.trainingData(request.json["data"], boardSize)
     previous_examples += examples
+    previous_games += 1
     if (previous_games >= config["gamesBeforeTraining"]):
         previous_games = 0
         try:
@@ -95,7 +98,6 @@ def train(boardSize):
                 model.cuda()
             return "error"
     else:
-        previous_games += 1
         print("examples added")
         print("previous games: ", previous_games)
         return "examples added"
@@ -152,6 +154,24 @@ def testpredict(size, board):
     except Exception as e:
         print(e)
         return "error"
+
+
+@app.route('/plot/<string:results>/<string:evaluator>')
+def plotResults(results, evaluator):
+    results = results.split(",")
+    cpucts = []
+    winRatios = []
+    for result in results:
+        cpuct, winRatio = result.split(":")
+        cpucts.append(float(cpuct))
+        winRatios.append(float(winRatio))
+    plt.clf()
+    plt.plot(cpucts, winRatios)
+    plt.title(evaluator + ' Evaluation')
+    plt.ylabel('Win Ratio')
+    plt.xlabel(evaluator)
+    plt.savefig("graphs/" + evaluator + str(random.randint(1, 1000)))
+    return "Graph Saved"
 
 
 class AverageMeter(object):
