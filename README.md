@@ -1,2 +1,2 @@
-# OthelloNeuralNetwork
-Neural network to learn the game of othello and output a mode for the Java program 
+# AlphaZero Neural Network
+Neural network to learn a series of board games via a flask server communication with a series of Java programs. 
