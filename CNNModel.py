@@ -1,14 +1,23 @@
 import sys
 
+import tensorflow as tf
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 from keras.layers import *
 from keras.models import *
 from keras.optimizers import *
-
+import json
 from utils import *
+
+with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
+    config = json.load(json_data_file)
 
 sys.path.append('..')
 
-class OthelloNN():
+
+class OthelloCNN():
     def __init__(self, boardSize, args):
         # game params
         self.board_x, self.board_y = (boardSize, boardSize)
@@ -44,8 +53,8 @@ class OthelloNN():
         K.clear_session()
 
     def save(self):
-        input("Type enter to save")
-        self.model.save("checkpoints/CNN4weights.best" + str(self.board_x) + ".h5")
+        filename = input("Enter File Name:")
+        self.model.save(config["modelFolder"] + config["game"] + "/" + str(filename) + "." + str(self.board_x) + ".h5")
         print("Saved model to disk")
 
 
@@ -59,5 +68,5 @@ args = dotdict({
 
 })
 # create new model
-nn = OthelloNN(config["boardSize"], args)
+nn = OthelloCNN(config["boardSize"], args)
 nn.save()

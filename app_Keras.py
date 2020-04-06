@@ -1,8 +1,13 @@
 import datetime
+import json
 import sys
 import time
 
 import tensorflow as tf
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 from flask import Flask
 from flask import request
 from keras import backend as K
@@ -15,14 +20,13 @@ app = Flask(__name__)
 
 sys.path.append('../..')
 
-
-with open('config.json') as json_data_file:
+with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
     config = json.load(json_data_file)
 
 args = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 100,
+    'epochs': config["epochs"],
     'batch_size': 94,
     'cuda': False,
     'num_channels': 512,
@@ -30,14 +34,15 @@ args = dotdict({
 })
 
 global graph
-graph = tf.get_default_graph()
-modelLocation = config["model"]
-model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+graph = tf.compat.v1.get_default_graph()
+modelLocation = config["modelFolder"] + config["game"] + "/" + config["modelFile"]
+model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
 
 global testgraph
-testgraph = tf.get_default_graph()
-testModelLocation = config["modelTest"]
-testmodel = load_model(testModelLocation + str(config["boardSize"]) + ".h5")
+testgraph = tf.compat.v1.get_default_graph()
+testModelLocation = modelLocation = config["modelFolder"] + config["game"] + "/" + config["testModelFile"]
+testModel = load_model(testModelLocation + "." + str(config["boardSize"]) + ".h5")
+
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
@@ -46,7 +51,7 @@ def train(boardSize):
     try:
         intBoards = read.trainingData(request.json["data"], boardSize)
         args["batch_size"] = len(intBoards)
-        filepath = modelLocation + str(config["boardSize"]) + ".h5"
+        filepath = modelLocation + "." + str(config["boardSize"]) + ".h5"
         input_boards, target_pis, target_vs = list(zip(*intBoards))
         target_pis = np.asarray(target_pis)
         input_boards = np.asarray(input_boards)
@@ -59,15 +64,15 @@ def train(boardSize):
                       epochs=args.epochs)
         K.clear_session()
         tf.reset_default_graph()
-        graph = tf.get_default_graph()
-        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+        graph = tf.compat.v1.get_default_graph()
+        model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         return str(datetime.datetime.now()) + " Trained"
     except Exception as e:
         K.clear_session()
         tf.reset_default_graph()
-        graph = tf.get_default_graph()
-        model = load_model(modelLocation + str(config["boardSize"]) + ".h5")
+        graph = tf.compat.v1.get_default_graph()
+        model = load_model(modelLocation + "." + str(config["boardSize"]) + ".h5")
         time.sleep(10)
         print(e)
         return "error"
@@ -96,7 +101,7 @@ def testpredict(size, board):
         board = read.board(board, size)
         board = board[np.newaxis, :]
         with testgraph.as_default():
-            pi, v = testmodel.predict(board)
+            pi, v = testModel.predict(board)
         policyString = ""
         for i in pi[0]:
             policyString += str(i) + ","
