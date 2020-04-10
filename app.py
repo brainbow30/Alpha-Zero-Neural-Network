@@ -158,18 +158,37 @@ def testpredict(size, board):
 
 @app.route('/plot/<string:results>/<string:evaluator>')
 def plotResults(results, evaluator):
-    results = results.split(",")
-    cpucts = []
-    winRatios = []
-    for result in results:
-        cpuct, winRatio = result.split(":")
-        cpucts.append(float(cpuct))
-        winRatios.append(float(winRatio))
+    results = results.split(";")
+    results = results[:-1]
     plt.clf()
-    plt.plot(cpucts, winRatios)
-    plt.title(evaluator + ' Evaluation')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    markers = ["^", (8, 2, 0), "o", "+"]
+    lss = ["--", "--", "-", "-"]
+    cs = ["b", "g", "k", "r"]
+    i = 0
+    legend = True
+    for parameter1Results in results:
+        parameter1, tempResults = parameter1Results.split("#")
+        tempResults = tempResults.split(",")
+        parameter2s = []
+        winRatios = []
+        for result in tempResults:
+            parameter2, winRatio = result.split(":")
+            parameter2s.append(float(parameter2))
+            winRatios.append(float(winRatio))
+        if (parameter1 == "null"):
+            ax.plot(parameter2s, winRatios)
+            legend = False
+        else:
+            ax.plot(parameter2s, winRatios, c=cs[i], marker=markers[i], ls=lss[i], label=str(parameter1))
+        i += 1
+
+    plt.title(config["game"] + " " + evaluator + ' Evaluation')
     plt.ylabel('Win Ratio')
     plt.xlabel(evaluator)
+    if (legend):
+        plt.legend(loc=2)
     plt.savefig("graphs/" + evaluator + str(random.randint(1, 1000)))
     return "Graph Saved"
 
