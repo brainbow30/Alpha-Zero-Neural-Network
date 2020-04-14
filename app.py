@@ -13,12 +13,20 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 from flask import Flask
 from flask import request
+from flask_caching import Cache
 import json
 from matplotlib import pyplot as plt
 import random
 from utils import *
 
 app = Flask(__name__)
+config = {
+    "DEBUG": True,  # some Flask specific configs
+    "CACHE_TYPE": "simple",  # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
+app.config.from_mapping(config)
+cache = Cache(app)
 
 with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
     config = json.load(json_data_file)
@@ -39,6 +47,8 @@ previous_examples = []
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
+    cache.delete_memoized(predict)
+    cache.delete_memoized(testpredict)
     global model
     global previous_examples, previous_games
     examples = read.trainingData(request.json["data"], boardSize)
@@ -104,6 +114,7 @@ def train(boardSize):
 
 
 @app.route('/predict/<int:size>/<string:board>')
+@cache.memoize(90)
 def predict(size, board):
     try:
         board = read.board(board, size)
@@ -129,6 +140,7 @@ def predict(size, board):
 
 
 @app.route('/testpredict/<int:size>/<string:board>')
+@cache.memoize(90)
 def testpredict(size, board):
     try:
         board = read.board(board, size)
