@@ -13,12 +13,20 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 from flask import Flask
 from flask import request
+from flask_caching import Cache
 import json
 from matplotlib import pyplot as plt
 import random
 from utils import *
 
 app = Flask(__name__)
+config = {
+    "DEBUG": True,  # some Flask specific configs
+    "CACHE_TYPE": "simple",  # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
+app.config.from_mapping(config)
+cache = Cache(app)
 
 with open('C:\\Users\\brain\\PycharmProjects\\Alpha-Zero-Neural-Network\\config.json') as json_data_file:
     config = json.load(json_data_file)
@@ -39,6 +47,8 @@ previous_examples = []
 
 @app.route('/train/<int:boardSize>', methods=["PUT"])
 def train(boardSize):
+    cache.delete_memoized(predict)
+    cache.delete_memoized(testpredict)
     global model
     global previous_examples, previous_games
     examples = read.trainingData(request.json["data"], boardSize)
@@ -104,6 +114,7 @@ def train(boardSize):
 
 
 @app.route('/predict/<int:size>/<string:board>')
+@cache.memoize(120)
 def predict(size, board):
     try:
         board = read.board(board, size)
@@ -129,6 +140,7 @@ def predict(size, board):
 
 
 @app.route('/testpredict/<int:size>/<string:board>')
+@cache.memoize(120)
 def testpredict(size, board):
     try:
         board = read.board(board, size)
@@ -158,18 +170,37 @@ def testpredict(size, board):
 
 @app.route('/plot/<string:results>/<string:evaluator>')
 def plotResults(results, evaluator):
-    results = results.split(",")
-    cpucts = []
-    winRatios = []
-    for result in results:
-        cpuct, winRatio = result.split(":")
-        cpucts.append(float(cpuct))
-        winRatios.append(float(winRatio))
+    results = results.split(";")
+    results = results[:-1]
     plt.clf()
-    plt.plot(cpucts, winRatios)
-    plt.title(evaluator + ' Evaluation')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    markers = ["^", (8, 2, 0), "o", "+"]
+    lss = ["--", "--", "-", "-"]
+    cs = ["b", "g", "k", "r"]
+    i = 0
+    legend = True
+    for parameter1Results in results:
+        parameter1, tempResults = parameter1Results.split("#")
+        tempResults = tempResults.split(",")
+        parameter2s = []
+        winRatios = []
+        for result in tempResults:
+            parameter2, winRatio = result.split(":")
+            parameter2s.append(float(parameter2))
+            winRatios.append(float(winRatio))
+        if (parameter1 == "null"):
+            ax.plot(parameter2s, winRatios)
+            legend = False
+        else:
+            ax.plot(parameter2s, winRatios, c=cs[i], marker=markers[i], ls=lss[i], label=str(parameter1))
+        i += 1
+
+    plt.title(config["game"] + " " + evaluator + ' Evaluation')
     plt.ylabel('Win Ratio')
     plt.xlabel(evaluator)
+    if (legend):
+        plt.legend(loc=2)
     plt.savefig("graphs/" + evaluator + str(random.randint(1, 1000)))
     return "Graph Saved"
 
