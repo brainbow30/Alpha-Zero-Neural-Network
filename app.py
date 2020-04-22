@@ -114,7 +114,7 @@ def train(boardSize):
 
 
 @app.route('/predict/<int:size>/<string:board>')
-@cache.memoize(90)
+@cache.memoize(120)
 def predict(size, board):
     try:
         board = read.board(board, size)
@@ -140,7 +140,7 @@ def predict(size, board):
 
 
 @app.route('/testpredict/<int:size>/<string:board>')
-@cache.memoize(90)
+@cache.memoize(120)
 def testpredict(size, board):
     try:
         board = read.board(board, size)
