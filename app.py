@@ -36,7 +36,7 @@ args = dotdict({
     'dropout': 0.3,
     'epochs': config["epochs"],
     'batch_size': 50,
-    'cuda': True,
+    'cuda': config["cuda"],
     'num_channels': 512,
     'checkpoint': config["checkpoints"]
 })
