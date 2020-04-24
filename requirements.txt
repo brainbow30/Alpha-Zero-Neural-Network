@@ -1,0 +1,6 @@
+flask
+tensorflow_gpu==1.14
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.5.0+cu101
+Flask-Caching
+matplotlib
