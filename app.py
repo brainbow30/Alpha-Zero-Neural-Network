@@ -37,8 +37,7 @@ args = dotdict({
     'epochs': config["epochs"],
     'batch_size': 50,
     'cuda': config["cuda"],
-    'num_channels': 512,
-    'checkpoint': config["checkpoints"]
+    'num_channels': 512
 })
 
 previous_games = 0

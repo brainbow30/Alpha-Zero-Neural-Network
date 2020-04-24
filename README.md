@@ -3,3 +3,4 @@ A flask restful API to allow a series of games to ask for predictions on the cur
 
 Has outperformed myself at games of Othello and Connect-4 with 5000 and 2000 training games respectively.
 
+run "pip install -r requirements.txt" to install all packages needed for program
