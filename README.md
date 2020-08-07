@@ -9,15 +9,15 @@ The final paper is included with all the details of solution, experimentation an
 
 ## Results
 ### Othello:
-Defeated Monte Carlo tree search with 3x more “thinking time”
-Defeated myself with 2s “thinking time”
+Defeated Monte Carlo tree search with 3x more “thinking time”\n
+Defeated myself with 2s “thinking time”\n
 
 ### Connect-4:
-Defeated Monte Carlo tree search with 4x more “thinking time”
-Defeated myself with 500ms “thinking time”
+Defeated Monte Carlo tree search with 4x more “thinking time”\n
+Defeated myself with 500ms “thinking time”\n
 
 ### Checkers:
-Defeated Monte Carlo tree search with 5x more “thinking time”
+Defeated Monte Carlo tree search with 5x more “thinking time”\n
 
 
 ![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
