@@ -11,20 +11,23 @@ The final paper is included with all the details of solution, experimentation an
 ### Othello:
 Defeated Monte Carlo tree search with 3x more “thinking time” <br />
 Defeated myself with 2s “thinking time”<br />
-
+#### GUI
 ![Othello GUI](othello.png?raw=true "Othello GUI")
+#### AlphaZero vs MCTS
+![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
 
 ### Connect-4:
-
 Defeated Monte Carlo tree search with 4x more “thinking time”<br />
 Defeated myself with 500ms “thinking time”<br />
+#### GUI
 ![Connect-4 GUI](connect4GUI.png?raw=true "Connect-4 GUI")
 
 ### Checkers:
 Defeated Monte Carlo tree search with 5x more “thinking time”<br />
+#### GUI
 ![Checkers GUI](checkers.png?raw=true "Checkers GUI")<br/>
 
 
-![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
+
 
 
