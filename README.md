@@ -9,20 +9,20 @@ The final paper is included with all the details of solution, experimentation an
 
 ## Results
 ### Othello:
-
-![Othello GUI](othello.png?raw=true "Othello GUI")
 Defeated Monte Carlo tree search with 3x more “thinking time” <br />
 Defeated myself with 2s “thinking time”<br />
 
+![Othello GUI](othello.png?raw=true "Othello GUI")
+
 ### Connect-4:
-![Connect-4 GUI](connect4GUI.png?raw=true "Connect-4 GUI")
+
 Defeated Monte Carlo tree search with 4x more “thinking time”<br />
 Defeated myself with 500ms “thinking time”<br />
+![Connect-4 GUI](connect4GUI.png?raw=true "Connect-4 GUI")
 
 ### Checkers:
-
-![Checkers GUI](checkers.png?raw=true "Checkers GUI")
 Defeated Monte Carlo tree search with 5x more “thinking time”<br />
+![Checkers GUI](checkers.png?raw=true "Checkers GUI")<br/>
 
 
 ![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
