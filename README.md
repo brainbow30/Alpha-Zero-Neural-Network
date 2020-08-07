@@ -7,4 +7,6 @@ run "pip install -r requirements.txt" to install all packages needed for program
 
 The final paper is included with all the details of solution, experimentation and results.
 
+![Alt text](EvalOthello.jpg?raw=true "AlphaZero (500ms) vs MCTS")
+
 
