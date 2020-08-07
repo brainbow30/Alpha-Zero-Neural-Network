@@ -7,6 +7,19 @@ run "pip install -r requirements.txt" to install all packages needed for program
 
 The final paper is included with all the details of solution, experimentation and results.
 
+# Results
+Othello:
+Defeated Monte Carlo tree search with 3x more “thinking time”
+Defeated myself with 2s “thinking time”
+
+Connect-4:
+Defeated Monte Carlo tree search with 4x more “thinking time”
+Defeated myself with 500ms “thinking time”
+
+Checkers:
+Defeated Monte Carlo tree search with 5x more “thinking time”
+
+
 ![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
 
 
