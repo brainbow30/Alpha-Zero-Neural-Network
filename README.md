@@ -14,6 +14,7 @@ Defeated myself with 2s “thinking time”<br />
 #### GUI
 ![Othello GUI](othello.png?raw=true "Othello GUI")
 #### AlphaZero vs MCTS
+AlphaZero 500ms "thinking time" vs Monte Carlo Tree Search with varying "thinking time"
 ![AlphaZero (500ms) vs MCTS Results"](EvalOthello.png?raw=true "AlphaZero (500ms) vs MCTS")
 
 ### Connect-4:
