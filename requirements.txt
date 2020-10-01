@@ -1,5 +1,5 @@
 flask
-tensorflow_gpu==1.15.2
+tensorflow_gpu==1.15.4
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==1.5.0+cu101
 Flask-Caching
